@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f8f5;
+  --foreground: #16231b;
+  --card: #ffffff;
+  --card-foreground: #16231b;
+  --primary: #266447;
+  --primary-foreground: #ffffff;
+  --secondary: #e8eee9;
+  --secondary-foreground: #244333;
+  --muted: #edf0ec;
+  --muted-foreground: #66736b;
+  --accent: #dff0e5;
+  --accent-foreground: #1d573b;
+  --destructive: #c2413b;
+  --destructive-foreground: #ffffff;
+  --border: #dde3dd;
+  --input: #d7ded8;
+  --ring: #3a7b59;
+  --radius: 0.9rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, monospace;
+}
+
+* { border-color: var(--border); }
+html { background: var(--background); }
+body {
+  margin: 0;
+  background: radial-gradient(circle at 8% 0%, rgba(185, 220, 196, 0.42), transparent 27rem), var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+button, input, textarea, select { font: inherit; }
+button:not(:disabled), select:not(:disabled) { cursor: pointer; }
+::selection { background: #b9dbc4; color: #143923; }
