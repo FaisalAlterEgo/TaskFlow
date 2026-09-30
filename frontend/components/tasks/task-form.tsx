@@ -27,14 +27,20 @@ export function TaskForm({ task, busy, onSubmit, onCancel }: TaskFormProps) {
   const [priority, setPriority] = useState<TaskPriority>(
     task?.priority ?? "MEDIUM",
   );
-  const [completionDesk, setCompletionDesk] = useState<string>(task?.completionDesk ?? "");
+  const [completionDesk, setCompletionDesk] = useState<string>(
+    task?.completionDesk ?? "",
+  );
   const [dueDate, setDueDate] = useState(dateValue(task?.dueDate));
   const [formError, setFormError] = useState<string | null>(null);
   const hasil =
     title == task?.title &&
     description == task?.description &&
     status == task?.status &&
-    priority == task?.priority;
+    priority == task?.priority &&
+    completionDesk == task?.completionDesk &&
+    dueDate === dateValue(task?.dueDate);
+
+  const statusOptions = status === "DONE" && completionDesk.length < 1;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -45,6 +51,14 @@ export function TaskForm({ task, busy, onSubmit, onCancel }: TaskFormProps) {
     if (cleanTitle.length > 120)
       return setFormError("Keep the title under 120 characters.");
     setFormError(null);
+    if (
+      task &&
+      (completionDesk.length < 1 || completionDesk.trim() === "") &&
+      status === "DONE"
+    )
+      return setFormError(
+        "Completion desk must be at least 1 characters long.",
+      );
     try {
       await onSubmit({
         title: cleanTitle,
@@ -182,7 +196,11 @@ export function TaskForm({ task, busy, onSubmit, onCancel }: TaskFormProps) {
             </p>
           )}
           <div className="flex gap-2 pt-1">
-            <Button className="flex-1" disabled={busy || hasil} type="submit">
+            <Button
+              className="flex-1"
+              disabled={busy || hasil || statusOptions}
+              type="submit"
+            >
               {busy && <LoaderCircle className="size-4 animate-spin" />}
               {task ? "Save changes" : "Create task"}
             </Button>

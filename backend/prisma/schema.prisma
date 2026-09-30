@@ -31,6 +31,7 @@ model Task {
   updatedAt   DateTime     @updatedAt
   userId      String       @db.Uuid
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completionDesk String?      @db.VarChar(1000)
 
   @@index([userId])
   @@index([status])

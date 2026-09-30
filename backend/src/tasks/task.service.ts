@@ -39,18 +39,44 @@ export class TaskService {
     const task = await this.repository.findById(userId, id);
     if (!task) throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
     if (task.status === "CANCELLED")
-      throw new AppError(400, "TASK_CANCELLED", "Cannot update a cancelled task");
-    if (input.status === "CANCELLED" && task.status !== "TODO" && task.status !== "IN_PROGRESS")
-      throw new AppError(400, "INVALID_STATUS_TRANSITION", "Only TODO or IN_PROGRESS tasks can be cancelled");
-    const updatedTask = await this.repository.update(userId, id, normalize(input));
+      throw new AppError(
+        400,
+        "TASK_CANCELLED",
+        "Cannot update a cancelled task",
+      );
+    if (
+      input.status === "CANCELLED" &&
+      task.status !== "TODO" &&
+      task.status !== "IN_PROGRESS"
+    )
+      throw new AppError(
+        400,
+        "INVALID_STATUS_TRANSITION",
+        "Only TODO or IN_PROGRESS tasks can be cancelled",
+      );
+    if (
+      input.status === "DONE" &&
+      (!input.completionDesk || input.completionDesk.trim() === "")
+    ) {
+      throw new AppError(
+        400,
+        "INVALID_COMPLETION_DESK",
+        "Completion desk is required when marking task as done",
+      );
+    }
+    const updatedTask = await this.repository.update(
+      userId,
+      id,
+      normalize(input),
+    );
     if (!updatedTask)
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
     return updatedTask;
   }
 
- async delete(userId : string, id : string) {
-  if(!(await this.repository.delete(userId, id))) {
-    throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
+  async delete(userId: string, id: string) {
+    if (!(await this.repository.delete(userId, id))) {
+      throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
+    }
   }
- }
 }
