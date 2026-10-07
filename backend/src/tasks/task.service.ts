@@ -34,6 +34,9 @@ export class TaskService {
   create(userId: string, input: CreateTaskInput) {
     return this.repository.create(userId, normalize(input));
   }
+  async history(userId: string, id: string) {
+    return this.repository.findHistory(userId, id);
+  }
 
   async update(userId: string, id: string, input: UpdateTaskInput) {
     const task = await this.repository.findById(userId, id);
@@ -64,6 +67,7 @@ export class TaskService {
         "Completion desk is required when marking task as done",
       );
     }
+
     const updatedTask = await this.repository.update(
       userId,
       id,
@@ -71,6 +75,23 @@ export class TaskService {
     );
     if (!updatedTask)
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
+    const actions: string[] = [];
+    if (task.status !== updatedTask.status) {
+      actions.push(
+        `Status changed from ${task.status} to ${updatedTask.status}`,
+      );
+    }
+    if (task.priority !== updatedTask.priority) {
+      actions.push(
+        `Priority changed from ${task.priority} to ${updatedTask.priority}`,
+      );
+    }
+
+    await Promise.all(
+      actions.map((action) =>
+        this.repository.createHistory(userId, id, action),
+      ),
+    );
     return updatedTask;
   }
 

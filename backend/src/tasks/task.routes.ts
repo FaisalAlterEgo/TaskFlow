@@ -14,5 +14,6 @@ export const createTaskRouter = (repository: TaskRepository = new PrismaTaskRepo
   router.get("/:id", validate(taskIdSchema, "params"), controller.get);
   router.patch("/:id", validate(taskIdSchema, "params"), validate(updateTaskSchema, "body"), controller.update);
   router.delete("/:id", validate(taskIdSchema, "params"), controller.delete);
+  router.get("/:id/history", validate(taskIdSchema, "params"), controller.history);
   return router;
 };

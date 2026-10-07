@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { beforeEach, describe, it } from "node:test";
-import type { Prisma, Task, User } from "@prisma/client";
+import type { History, Prisma, Task, User } from "@prisma/client";
 import request from "supertest";
 import { createApp } from "../app";
 import type { UserRepository } from "../auth/user.repository";
@@ -10,6 +10,7 @@ import type { TaskListInput } from "./task.schemas";
 
 class MemoryTaskRepository implements TaskRepository {
   tasks: Task[] = [];
+  histories: History[] = [];
 
   async findMany(userId: string, filters: TaskListInput) {
     return this.tasks.filter(
@@ -29,6 +30,18 @@ class MemoryTaskRepository implements TaskRepository {
       this.tasks.find((task) => task.id === id && task.userId === userId) ??
       null
     );
+  }
+
+  async findHistory(userId: string, id: string) {
+    return this.histories.filter(
+      (history) => history.userId === userId && history.taskId === id,
+    );
+  }
+
+  async createHistory(userId: string, taskId: string, action: string) {
+    const history = { id: randomUUID(), userId, taskId, action, createdAt: new Date() };
+    this.histories.push(history);
+    return history;
   }
 
   async create(userId: string, data: Prisma.TaskUpdateInput) {
@@ -105,7 +118,7 @@ async function authenticatedAgent(
     .expect(201);
   await agent
     .post("/api/auth/login")
-    .send({ email, password: "password123" })
+    .send({ email, password: "password123", name: "John Doe" })
     .expect(200);
   return agent;
 }
@@ -129,7 +142,7 @@ describe("task API", () => {
 
     await agent
       .patch(`/api/tasks/${created.body.data.id}`)
-      .send({ status: "DONE" })
+      .send({ status: "DONE", completionDesk: "Finished" })
       .expect(200)
       .expect((response) => assert.equal(response.body.data.status, "DONE"));
     await agent
@@ -138,6 +151,39 @@ describe("task API", () => {
       .expect((response) => assert.equal(response.body.meta.total, 1));
     await agent.delete(`/api/tasks/${created.body.data.id}`).expect(204);
     await agent.get(`/api/tasks/${created.body.data.id}`).expect(404);
+  });
+
+  it("records separate status and priority changes across repeated updates", async () => {
+    const app = createApp(repository, userRepository);
+    const agent = await authenticatedAgent(app);
+    const created = await agent
+      .post("/api/tasks")
+      .send({ title: "Track changes" })
+      .expect(201);
+    const taskId = created.body.data.id as string;
+
+    await agent.patch(`/api/tasks/${taskId}`)
+      .send({ status: "IN_PROGRESS", priority: "HIGH", title: "New title" })
+      .expect(200);
+    await agent.patch(`/api/tasks/${taskId}`)
+      .send({ status: "TODO", priority: "LOW", description: "New description" })
+      .expect(200);
+    await agent.patch(`/api/tasks/${taskId}`)
+      .send({ title: "Title only", description: "Description only" })
+      .expect(200);
+
+    const response = await agent.get(`/api/tasks/${taskId}/history`).expect(200);
+    const histories = response.body.data as History[];
+    assert.equal(histories.length, 4);
+    assert.deepEqual(histories.map((history) => history.action), [
+      "Status changed from TODO to IN_PROGRESS",
+      "Priority changed from MEDIUM to HIGH",
+      "Status changed from IN_PROGRESS to TODO",
+      "Priority changed from HIGH to LOW",
+    ]);
+    assert.equal(new Set(histories.map((history) => history.id)).size, 4);
+    assert.ok(histories.every((history) => history.taskId === taskId));
+    assert.ok(histories.every((history) => history.userId === userRepository.users[0].id));
   });
 
   it("returns structured validation errors", async () => {

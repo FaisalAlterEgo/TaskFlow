@@ -45,3 +45,11 @@ export interface Credentials {
   email: string;
   password: string;
 }
+
+export interface History {
+  id: string;
+  userId: string;
+  action: string;
+  createdAt: string;
+}
+

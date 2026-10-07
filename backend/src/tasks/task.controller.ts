@@ -44,4 +44,12 @@ export class TaskController {
     await this.service.delete(req.user!.id, req.params.id as string);
     res.status(204).send();
   };
+  history: RequestHandler = async (req, res) => {
+    res.json({
+      data: await this.service.history(
+        req.user!.id,
+        req.params.id as string,
+      ),
+    });
+  }
 }

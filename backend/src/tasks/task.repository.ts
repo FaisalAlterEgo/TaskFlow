@@ -1,11 +1,20 @@
-import type { Prisma, Task } from "@prisma/client";
+import type { Prisma, PrismaClient, Task } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import type { TaskListInput } from "./task.schemas";
 
 export interface TaskRepository {
   findMany(userId: string, filters: TaskListInput): Promise<Task[]>;
   findById(userId: string, id: string): Promise<Task | null>;
+  findHistory(
+    userId: string,
+    id: string,
+  ): Promise<Prisma.HistoryGetPayload<{}>[]>;
   create(userId: string, data: Prisma.TaskUpdateInput): Promise<Task>;
+  createHistory(
+    userId: string,
+    taskId: string,
+    action: string,
+  ): Promise<Prisma.HistoryGetPayload<{}>>;
   update(
     userId: string,
     id: string,
@@ -15,6 +24,10 @@ export interface TaskRepository {
 }
 
 export class PrismaTaskRepository implements TaskRepository {
+  constructor(
+    private readonly historyModel: PrismaClient["history"] = prisma.history,
+  ) {}
+
   findMany(userId: string, filters: TaskListInput) {
     return prisma.task.findMany({
       where: {
@@ -47,9 +60,20 @@ export class PrismaTaskRepository implements TaskRepository {
   findById(userId: string, id: string) {
     return prisma.task.findFirst({ where: { id, userId } });
   }
-  create(userId: string, data: Prisma.TaskUpdateInput) {
-    return prisma.task.create({
+  async create(userId: string, data: Prisma.TaskUpdateInput) {
+    const task = await prisma.task.create({
       data: { ...data, userId } as Prisma.TaskUncheckedCreateInput,
+    });
+    return task;
+  }
+  findHistory(userId: string, id: string) {
+    return this.historyModel.findMany({
+      where: { userId, taskId: id },
+    });
+  }
+  createHistory(userId: string, taskId: string, action: string) {
+    return this.historyModel.create({
+      data: { userId, taskId, action },
     });
   }
 
