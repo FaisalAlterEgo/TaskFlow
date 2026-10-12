@@ -33,6 +33,7 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
   onStatusChange: (task: Task, status: TaskStatus) => void;
+  onHistoryClick?: (task: Task) => void;
 }
 
 export function TaskCard({
@@ -41,11 +42,12 @@ export function TaskCard({
   onEdit,
   onDelete,
   onStatusChange,
+  onHistoryClick,
 }: TaskCardProps) {
   const done = task.status === "DONE";
   const cancelled = task.status === "CANCELLED";
   const overdue = Boolean(
-    task.dueDate && !done && new Date(task.dueDate) < new Date(),
+    task.dueDate && !done && !cancelled && (new Date(task.dueDate) < new Date()),
   );
   const due = task.dueDate
     ? new Intl.DateTimeFormat("en", {
@@ -156,6 +158,16 @@ export function TaskCard({
                   onClick={() => onDelete(task)}
                 >
                   <Trash2 className="size-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-muted-foreground hover:bg-blue-50 hover:text-blue-700"
+                  aria-label={`View history for ${task.title}`}
+                  disabled={busy}
+                  onClick={() => onHistoryClick && onHistoryClick(task)}
+                >
+                  <Clock3 className="size-4" />
                 </Button>
               </div>
             </div>

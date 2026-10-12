@@ -69,6 +69,7 @@ export class PrismaTaskRepository implements TaskRepository {
   findHistory(userId: string, id: string) {
     return this.historyModel.findMany({
       where: { userId, taskId: id },
+      orderBy: { createdAt: "desc" },
     });
   }
   createHistory(userId: string, taskId: string, action: string) {

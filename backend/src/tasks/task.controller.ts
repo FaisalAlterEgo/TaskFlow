@@ -46,7 +46,7 @@ export class TaskController {
   };
   history: RequestHandler = async (req, res) => {
     res.json({
-      data: await this.service.history(
+      data: await this.service.getHistory(
         req.user!.id,
         req.params.id as string,
       ),

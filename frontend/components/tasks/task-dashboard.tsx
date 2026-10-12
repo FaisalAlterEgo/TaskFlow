@@ -1,5 +1,5 @@
 "use client";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
@@ -26,6 +26,7 @@ import type {
   TaskPriority,
   TaskStatus,
   User,
+  History,
 } from "@/lib/types";
 
 function messageOf(error: unknown) {
@@ -51,7 +52,8 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editing, setEditing] = useState<Task | null>(null);
-
+  const [history, setHistory] = useState<History[] | null>(null);
+  const [historyTask, setHistoryTask] = useState<null | Task>(null);
   const loadTasks = useCallback(async () => {
     try {
       const response = await taskApi.list(filters);
@@ -113,6 +115,11 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
       await mutate(() => taskApi.create(input), "Task created successfully.");
     }
   }
+  async function openHistory(task: Task) {
+    setHistoryTask(task);
+    setHistory(null);
+    await loadHistory(task);
+  }
 
   async function changeStatus(task: Task, status: TaskStatus) {
     try {
@@ -132,6 +139,15 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
     } catch {}
   }
 
+  async function loadHistory(task: Task) {
+    try {
+      const response = await taskApi.getHistory(task.id);
+      console.log("data ", response);
+      setHistory(response.data as History[]);
+    } catch (caught) {
+      setError(messageOf(caught));
+    }
+  }
   const hasFilters = Boolean(
     filters.search || filters.status !== "ALL" || filters.priority !== "ALL",
   );
@@ -152,7 +168,9 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-xs text-muted-foreground sm:inline">{user.email}</span>
+            <span className="hidden text-xs text-muted-foreground sm:inline">
+              {user.email}
+            </span>
             <Button variant="outline" size="sm" onClick={() => void onLogout()}>
               <LogOut className="size-4" /> Logout
             </Button>
@@ -314,6 +332,7 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
                     onEdit={setEditing}
                     onDelete={deleteTask}
                     onStatusChange={changeStatus}
+                    onHistoryClick={openHistory}
                   />
                 ))}
               </div>
@@ -361,6 +380,42 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
           />
         </div>
       </main>
+      <Dialog
+        open={historyTask !== null} // terbuka kalau ada task yang dipilih
+        onOpenChange={(open) => {
+          if (!open) setHistoryTask(null); // diminta tutup → kosongkan pilihan
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Riwayat: {historyTask?.title}</DialogTitle>
+          </DialogHeader>
+
+          {history === null ? (
+            <p>Memuat…</p> // belum selesai diambil
+          ) : history.length === 0 ? (
+            <p>Belum ada riwayat.</p> // sudah diambil, kosong
+          ) : (
+            <ul>
+              {" "}
+              {history.map((item) => (
+                <div key={item.id}>
+                  <li>{item?.action}</li>
+                  <li>
+                    {new Intl.DateTimeFormat("en", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(item?.createdAt))}
+                  </li>
+                </div>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

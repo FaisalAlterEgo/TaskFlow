@@ -34,9 +34,10 @@ export class TaskService {
   create(userId: string, input: CreateTaskInput) {
     return this.repository.create(userId, normalize(input));
   }
-  async history(userId: string, id: string) {
+  async getHistory(userId: string, id: string) {
     return this.repository.findHistory(userId, id);
   }
+  
 
   async update(userId: string, id: string, input: UpdateTaskInput) {
     const task = await this.repository.findById(userId, id);
