@@ -142,7 +142,6 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
   async function loadHistory(task: Task) {
     try {
       const response = await taskApi.getHistory(task.id);
-      console.log("data ", response);
       setHistory(response.data as History[]);
     } catch (caught) {
       setError(messageOf(caught));
@@ -399,18 +398,17 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
             <ul>
               {" "}
               {history.map((item) => (
-                <div key={item.id}>
-                  <li>{item?.action}</li>
-                  <li>
-                    {new Intl.DateTimeFormat("en", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }).format(new Date(item?.createdAt))}
-                  </li>
-                </div>
+                <li key={item.id}>
+                  {item.action}
+                  <br />
+                  {new Intl.DateTimeFormat("en", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(item?.createdAt))}
+                </li>
               ))}
             </ul>
           )}
