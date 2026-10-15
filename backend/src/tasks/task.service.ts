@@ -35,10 +35,13 @@ export class TaskService {
     return this.repository.create(userId, normalize(input));
   }
   async getHistory(userId: string, id: string) {
+    const task = await this.repository.findById(userId, id);
+    if (!task) throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
     return this.repository.findHistory(userId, id);
   }
   
 
+  
   async update(userId: string, id: string, input: UpdateTaskInput) {
     const task = await this.repository.findById(userId, id);
     if (!task) throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");

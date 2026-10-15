@@ -186,6 +186,25 @@ describe("task API", () => {
     assert.ok(histories.every((history) => history.userId === userRepository.users[0].id));
   });
 
+  it("returns 404 for history of another user's or missing task", async () => {
+    const app = createApp(repository, userRepository);
+    const owner = await authenticatedAgent(app);
+    const other = await authenticatedAgent(app, "other@example.com");
+    const created = await owner
+      .post("/api/tasks")
+      .send({ title: "Private task" })
+      .expect(201);
+
+    for (const id of [created.body.data.id, randomUUID()]) {
+      await other
+        .get(`/api/tasks/${id}/history`)
+        .expect(404)
+        .expect((response) =>
+          assert.equal(response.body.error.code, "TASK_NOT_FOUND"),
+        );
+    }
+  });
+
   it("returns structured validation errors", async () => {
     const agent = await authenticatedAgent(
       createApp(repository, userRepository),
