@@ -54,6 +54,7 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
   const [editing, setEditing] = useState<Task | null>(null);
   const [history, setHistory] = useState<History[] | null>(null);
   const [historyTask, setHistoryTask] = useState<null | Task>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const loadTasks = useCallback(async () => {
     try {
       const response = await taskApi.list(filters);
@@ -118,6 +119,7 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
   async function openHistory(task: Task) {
     setHistoryTask(task);
     setHistory(null);
+    setHistoryError(null);
     await loadHistory(task);
   }
 
@@ -144,7 +146,7 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
       const response = await taskApi.getHistory(task.id);
       setHistory(response.data as History[]);
     } catch (caught) {
-      setError(messageOf(caught));
+      setHistoryError(messageOf(caught));
     }
   }
   const hasFilters = Boolean(
@@ -390,10 +392,12 @@ export function TaskDashboard({ user, onLogout }: TaskDashboardProps) {
             <DialogTitle>Riwayat: {historyTask?.title}</DialogTitle>
           </DialogHeader>
 
-          {history === null ? (
-            <p>Memuat…</p> // belum selesai diambil
+          {historyError ? (
+            <p className="text-red-500">{historyError}</p>
+          ) : history === null ? (
+            <p>Memuat…</p>
           ) : history.length === 0 ? (
-            <p>Belum ada riwayat.</p> // sudah diambil, kosong
+            <p>Belum ada riwayat.</p>
           ) : (
             <ul>
               {" "}
