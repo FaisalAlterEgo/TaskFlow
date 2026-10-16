@@ -25,8 +25,8 @@ export class TaskService {
     return this.repository.findMany(userId, filters);
   }
 
-  async get(userId: string, id: string) {
-    const task = await this.repository.findById(userId, id);
+  async get(userId: string, taskId: string) {
+    const task = await this.repository.findById(userId, taskId);
     if (!task) throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
     return task;
   }
@@ -34,16 +34,14 @@ export class TaskService {
   create(userId: string, input: CreateTaskInput) {
     return this.repository.create(userId, normalize(input));
   }
-  async getHistory(userId: string, id: string) {
-    const task = await this.repository.findById(userId, id);
+  async getHistory(userId: string, taskId: string) {
+    const task = await this.repository.findById(userId, taskId);
     if (!task) throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
-    return this.repository.findHistory(userId, id);
+    return this.repository.findHistory(userId, taskId);
   }
-  
 
-  
-  async update(userId: string, id: string, input: UpdateTaskInput) {
-    const task = await this.repository.findById(userId, id);
+  async update(userId: string, taskId: string, input: UpdateTaskInput) {
+    const task = await this.repository.findById(userId, taskId);
     if (!task) throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
     if (task.status === "CANCELLED")
       throw new AppError(
@@ -74,7 +72,7 @@ export class TaskService {
 
     const updatedTask = await this.repository.update(
       userId,
-      id,
+      taskId,
       normalize(input),
     );
     if (!updatedTask)
@@ -93,14 +91,14 @@ export class TaskService {
 
     await Promise.all(
       actions.map((action) =>
-        this.repository.createHistory(userId, id, action),
+        this.repository.createHistory(userId, taskId, action),
       ),
     );
     return updatedTask;
   }
 
-  async delete(userId: string, id: string) {
-    if (!(await this.repository.delete(userId, id))) {
+  async delete(userId: string, taskId: string) {
+    if (!(await this.repository.delete(userId, taskId))) {
       throw new AppError(404, "TASK_NOT_FOUND", "Task was not found");
     }
   }
